@@ -14,30 +14,35 @@
 % (optional) eigenvalue distribution
 % NOTE: I think uniform is fine
 
-function errors_normalized = cg_bounds(N, k)
+function [en, rho_m] = cg_bounds(N, k)
   a = 2 / k; % get lhs bound on eigen
   rho = (sqrt(k) - 1) / (sqrt(k) + 1); % upper bound we're testing
   sigma = linspace(a, 2, N); %eigenvalues
   A = diag(sigma); % construct A
   b = ones(N,1) ./sqrt(N); % b chosen so x_true is as below
   x_true = ones(N,1) ./ (sqrt(N) * diag(A));
-  errors_normalized = x_true; % TEMP so function type is accurate
-  [xm, ~, ~, m, resvec] = pcg(A, b, 1e-16);
+  [xm, ~, ~, m, resvec] = pcg(A, b, 1e-14); % compute xm and store m (num iterations)
   e0 = sqrt(x_true' * A * x_true); % compute || e0 ||_A
   em = sqrt((x_true-xm)' * A * (x_true-xm)); % compute || em ||_A
-  disp("\n\n\n");
-  disp("em");
-  disp(em);
-  disp("\n\n");
-  disp("e0");
-  disp(e0);
-  disp("\n\n");
-  disp(em / e0);
-  disp(rho ^ m);
-  disp((em / e0) < rho^m)
+  en = em / e0;
+  rho_m = rho^m;
+  % disp("\n\n\n");
+  % disp("em");
+  % disp(em);
+  % disp("\n\n");
+  % disp("e0");
+  % disp(e0);
+  % disp("\n\n");
+  % disp(em / e0);
+  % disp(rho ^ m);
+  % disp((em / e0) < rho^m)
 end
 
-cg_bounds(30, 2);
+for i = [2 10 50 100 1000]
+  [em, rm] = cg_bounds(30, i);
+  disp(['condition number: ', num2str(i), ' em / e0 = ', num2str(em), ', rho^m = ', num2str(rm)]);
+  disp(['em / e0 <= rho^m: ', mat2str(em <= rm)]);
+end
 % Do:
 % 0. Define b, x0.
 % 1. compute rho
@@ -49,16 +54,3 @@ cg_bounds(30, 2);
 % 7. Plot Normalized errors
 
 % 8. Repeat for 5 different condition numbers
-
-% Create the diagonal matrix
-A = diag(sigma);
-
-% Display the size and a few elements to verify
-size(A)
-A(1,1)  % First diagonal element (should be 1)
-A(25,25) % Middle diagonal element (should be around 1.5)
-A(50,50) % Last diagonal element (should be 2)
-
-cond(A)
-
-% TODO: use paper to design A
